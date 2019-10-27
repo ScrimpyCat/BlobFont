@@ -17,6 +17,7 @@ defmodule BlobFont.CLI do
       * `--letter`, `-l CHAR [-glyph x y w h] [-offset x y] [-adv advance]` - Add or modify a letter
       * `--letter-remove`, `-lr CHAR` - Remove a letter
       * `--bmfont` - Specify input type is BMFont
+      * `--stdin`, `-in` - Specify that the input will be passed through stdin
     """
 
     def main(args \\ [], opts \\ [])
@@ -35,7 +36,20 @@ defmodule BlobFont.CLI do
         main(args, [{ :letter, { String.to_charlist(char) |> hd, :remove } }|opts])
     end
     def main([cmd|args], opts) when cmd in ["--bmfont"], do: main(args, [{ :type, :bmfont }|opts])
-    def main([file], opts), do: convert(file, opts)
+    def main([cmd|args], opts) when cmd in ["-in", "--stdin"], do: main(args, [{ :stdin, true }|opts])
+    def main([file], opts), do: convert(File.read!(file), Path.extname(file), opts)
+    def main([], opts) do
+        :ok = :io.setopts(:standard_io, encoding: :latin1)
+
+        case opts[:stdin] && IO.binread(:all) do
+            data when is_binary(data) and bit_size(data) > 0 ->
+                :ok = :io.setopts(:standard_io, encoding: :utf8)
+                convert(data, "", opts)
+            _ ->
+                :ok = :io.setopts(:standard_io, encoding: :utf8)
+                help()
+        end
+    end
     def main(_, _), do: help()
 
     defp letter_options(args, opts \\ [])
@@ -75,6 +89,7 @@ defmodule BlobFont.CLI do
     defp modify_bmfont(font, [{ :unicode, unicode }|opts]), do: Map.update!(font, :info, &(%{ &1 | unicode: unicode })) |> modify_bmfont(opts)
     defp modify_bmfont(font, [{ :name, name }|opts]), do: Map.update!(font, :pages, &Enum.map(&1, fn page -> %{ page | file: name } end)) |> modify_bmfont(opts)
     defp modify_bmfont(font, [{ :trim, true }|opts]), do: Map.update!(font, :pages, &Enum.map(&1, fn page -> %{ page | file: Path.rootname(page.file) } end)) |> modify_bmfont(opts)
+    defp modify_bmfont(font, [_|opts]), do: modify_bmfont(font, opts)
     defp modify_bmfont(font, []), do: font
 
     defp type_for_content(<<"BMF", _ :: binary>>), do: :bmfont
@@ -92,9 +107,8 @@ defmodule BlobFont.CLI do
         end
     end
 
-    defp convert(file, opts) do
-        input = File.read!(file)
-        case input_type(input, Path.extname(file), opts) do
+    defp convert(input, ext, opts) do
+        case input_type(input, ext, opts) do
             :bmfont -> BMFont.parse(input) |> modify_bmfont(opts)
         end
         |> BlobFont.convert
