@@ -56,6 +56,8 @@ defmodule BlobFont do
     end
     defp convert([%BMFont.Char{ id: id, x: x, y: y, width: w, height: h, xoffset: xoffset, yoffset: yoffset, xadvance: xadvance }|args], script) do
         letter = case [id] do
+            '\n' -> '\\n'
+            '\t' -> '\\t'
             '\\' -> '\\\\'
             '"' -> '\\"'
             c -> c

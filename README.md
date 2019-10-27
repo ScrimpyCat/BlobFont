@@ -1,5 +1,7 @@
 # BlobFont
-Convert BMFont files to [blob font files](https://github.com/ScrimpyCat/CommonGameKit/blob/master/assets/font/arial.font)
+A utility for working with [blob fonts](https://github.com/ScrimpyCat/CommonGameKit/blob/master/assets/font/arial.font)
+
+Can be used to convert BMFont files to blob fonts.
 
 Usage
 -----
