@@ -23,7 +23,7 @@ defmodule BlobFont.Mixfile do
     # Run "mix help deps" to learn about dependencies.
     defp deps do
         [
-            { :bmfont, "~> 0.0.2" },
+            { :bmfont, "~> 0.1.0" },
             { :simple_markdown, "~> 0.6" },
             { :simple_markdown_extension_cli, "~> 0.1.3" },
             { :ex_doc, "~> 0.18", only: :dev }
